@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 自适应振荡器测试文件
-用于验证3阶自适应振荡器的相位估计性能
+用于验证2阶自适应振荡器的相位估计性能
 """
 
 import numpy as np
@@ -13,13 +13,13 @@ plt.rcParams['font.sans-serif'] = ['DejaVu Sans', 'SimHei', 'WenQuanYi Micro Hei
 plt.rcParams['axes.unicode_minus'] = False
 
 class AdaptiveOscillator:
-    """3阶自适应振荡器类 - 基于MATLAB实现"""
+    """2阶自适应振荡器类 - 基于MATLAB实现"""
     
     def __init__(self, initial_frequency=1.0, dt=0.02):
         self.dt = dt
         
         # 振荡器阶数
-        self.order = 3
+        self.order = 2
         
         # 振荡器参数 [幅值, 频率, 相位]
         self.para = np.zeros((self.order, 3))
@@ -31,10 +31,6 @@ class AdaptiveOscillator:
         self.para[1, 0] = 0.4
         self.para[1, 1] = 2 * np.pi * initial_frequency
         self.para[1, 2] = 0.0
-        # 高阶振荡器初始化为基频整数倍
-        self.para[2, 0] = 0.0
-        self.para[2, 1] = 2 * self.para[1, 1]
-        self.para[2, 2] = 0.0
         
         # 自适应参数
         self.init_frequency = initial_frequency
@@ -84,12 +80,6 @@ class AdaptiveOscillator:
         else:
             self.para[1, 0] = 0.4
         
-        # 设置高阶振荡器初值（频率为基频整数倍）
-        for j in range(2, self.order):
-            factor = j  # 基频倍数（j=2 -> 2倍频）
-            self.para[j, 1] = factor * self.para[1, 1]
-            self.para[j, 2] = self.para[1, 2]
-        
         print(f"振荡器初始化 - 频率: {frequency:.2f} Hz, 相位: {self.para[1, 2]:.3f} rad, 幅值: {self.para[1, 0]:.3f}")
     
     def update(self, q, estimated_frequency=None):
@@ -133,18 +123,11 @@ class AdaptiveOscillator:
         
         self.para[1, 1] = max(min(self.para[1, 1], self.omega_max), self.omega_min)
         
-        # 高阶振荡器频率保持为基频整数倍
-        for j in range(2, self.order):
-            self.para[j, 1] = self.para[1, 1] * j
-        
         for j in range(1, self.order):
             self.para[j, 2] = self.para[j, 2] + self.para_dot[j, 2] * self.dt
         
-        # 包络相位，避免溢出
         phi = self._wrap_to_2pi(self.para[1, 2])
         self.para[1, 2] = phi
-        for j in range(2, self.order):
-            self.para[j, 2] = self._wrap_to_2pi(self.para[j, 2])
         self.current_phase = float(phi)
         
         return self.current_phase
@@ -478,7 +461,7 @@ def test_noisy_signal():
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("3阶自适应振荡器测试程序")
+    print("2阶自适应振荡器测试程序")
     print("基于 adaptive_oscillators.m 的Python实现")
     print("="*60)
     
